@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOTM - Mont Olympe</title>
+    <style>
+        body {
+            background-image: url('https://i83.servimg.com/u/f83/19/48/18/17/tnr6nx10.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            font-family: cursive, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 50px;
+            border-radius: 10px;
+            margin: auto;
+            display: inline-block;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .adversary {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        .adversary img {
+            width: 240px;
+            height: 354px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .adversary p {
+            margin: 5px 0;
+        }
+        .stats-input {
+            width: 50px;
+            margin: 0 5px;
+            text-align: center;
+        }
+        .button {
+            padding: 10px 20px;
+	    margin: 5px;
+            background-color: #e07757;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #ff6c6d;
+        }
+.logo {
+    width: 120px; /* Ajustez la taille selon vos besoins */
+    margin-bottom: 0px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+    <img src="https://i83.servimg.com/u/f83/19/48/18/17/lmo210.png" alt="Logo" class="logo">
+    <h1>Mont Olympe</h1>
+        <div class="section">
+            <h2>Vos Cartes</h2>
+            <div id="player-characters"></div>
+            <button class="button" onclick="initializeCharacterStats()">Enregistrer les statistiques</button>
+        </div>
+        <div class="section">
+            <h2>Choisissez une série d'adversaires</h2>
+            <div>
+                <button class="button" onclick="selectSeries(1)">Palpatine</button>
+                <button class="button" onclick="selectSeries(2)">Yoda</button>
+            </div>
+        </div>
+        <div class="section">
+            <h2>Adversaires</h2>
+            <div id="adversary"></div>
+        </div>
+        <div class="section">
+            <h2>Combat</h2>
+            <p id="combat-info">Sélectionnez un personnage pour commencer le combat.</p>
+            <button class="button" onclick="startCombat()">Lancer le combat</button>
+        </div>
+        <div class="section">
+            <h2>Résumé des Récompenses</h2>
+            <p>Jetons : <span id="tokens">0</span></p>
+            <p>Points de Dieu : <span id="god-points">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Données initiales
+        const series1 = [
+            { name: "Savage", img: "https://i83.servimg.com/u/f83/19/48/18/17/savage10.jpg", type: "sbire", stats: { Force: 90, Mana: 87, Vitesse: 84, Popularité: 84 }, turnStat: "Force" },
+            { name: "Ventress", img: "https://i83.servimg.com/u/f83/19/48/18/17/ventre10.jpg", type: "sbire", stats: { Force: 85, Mana: 90, Vitesse: 87, Popularité: 84 }, turnStat: "Mana" },
+	    { name: "Kylo", img: "https://i83.servimg.com/u/f83/19/48/18/17/kylo310.jpg", type: "sbire", stats: { Force: 89, Mana: 94, Vitesse: 83, Popularité: 84 }, turnStat: "Mana" },
+            { name: "Anakin", img: "https://i83.servimg.com/u/f83/19/48/18/17/anakin11.jpg", type: "sbire", stats: 	{ Force: 90, Mana: 95, Vitesse: 93, Popularité: 94 }, turnStat: "Vitesse" },
+	    { name: "Maul", img: "https://i83.servimg.com/u/f83/19/48/18/17/maul_o11.jpg", type: "sbire", stats: { Force: 94, Mana: 94, Vitesse: 95, Popularité: 88 }, turnStat: "Force" },
+            { name: "Starkiller", img: "https://i83.servimg.com/u/f83/19/48/18/17/starki10.jpg", type: "sbire", stats: { Force: 95, Mana: 95, Vitesse: 86, Popularité: 94 }, turnStat: "Popularité" },
+	    { name: "Nihilus", img: "https://i83.servimg.com/u/f83/19/48/18/17/nihilu10.jpg", type: "sbire", stats: { Force: 94, Mana: 96, Vitesse: 94, Popularité: 90 }, turnStat: "Vitesse" },
+            { name: "Dooku", img: "https://i83.servimg.com/u/f83/19/48/18/17/dooku_11.jpg", type: "sbire", stats: { Force: 90, Mana: 95, Vitesse: 94, Popularité: 95 }, turnStat: "Mana" },
+	    { name: "Anakin", img: "https://i83.servimg.com/u/f83/19/48/18/17/anakin12.jpg", type: "admin", stats: { Force: 94, Mana: 95, Vitesse: 88, Popularité: 94 }, turnStat: ["Force", "Mana"] },
+	    { name: "Revan", img: "https://i83.servimg.com/u/f83/19/48/18/17/revan310.jpg", type: "admin", stats: { Force: 96, Mana: 96, Vitesse: 94, Popularité: 95 }, turnStat: ["Force", "Vitesse"] },
+            { name: "Palpatine", img: "https://i83.servimg.com/u/f83/19/48/18/17/palpat11.jpg", type: "dieu", stats: { Force: 72, Mana: 97, Vitesse: 87, Popularité: 94 }, turnStat: ["Mana", "Popularité"] },
+            // Ajoutez 6 sbires, 2 admins, et 1 dieu avec des stats personnalisées ici
+        ];
+
+        const series2 = [
+            { name: "Plo Koon", img: "https://i83.servimg.com/u/f83/19/48/18/17/plo_ko10.jpg", type: "sbire", stats: { Force: 84, Mana: 90, Vitesse: 88, Popularité: 86 }, turnStat: "Mana" },
+            { name: "Rey", img: "https://i83.servimg.com/u/f83/19/48/18/17/rey10.jpg", type: "sbire", stats: { Force: 82, Mana: 92, Vitesse: 84, Popularité: 87 }, turnStat: "Mana" },
+	    { name: "Grogu", img: "https://i83.servimg.com/u/f83/19/48/18/17/grogu10.jpg", type: "sbire", stats: { Force: 60, Mana: 92, Vitesse: 77, Popularité: 94 }, turnStat: "Popularité" },
+            { name: "Qui-Gon", img: "https://i83.servimg.com/u/f83/19/48/18/17/qui-go11.jpg", type: "sbire", stats: 	{ Force: 83, Mana: 94, Vitesse: 86, Popularité: 95 }, turnStat: "Mana" },
+	    { name: "Ahsoka", img: "https://i83.servimg.com/u/f83/19/48/18/17/ahsoka12.jpg", type: "sbire", stats: { Force: 87, Mana: 92, Vitesse: 94, Popularité: 93 }, turnStat: "Vitesse" },
+            { name: "Luke", img: "https://i83.servimg.com/u/f83/19/48/18/17/luke11.jpg", type: "sbire", stats: { Force: 86, Mana: 93, Vitesse: 85, Popularité: 94 }, turnStat: "Popularité" },
+	    { name: "Rey", img: "https://i83.servimg.com/u/f83/19/48/18/17/rey_ol10.jpg", type: "sbire", stats: { Force: 87, Mana: 95, Vitesse: 90, Popularité: 90 }, turnStat: "Mana" },
+            { name: "Obi-Wan", img: "https://i83.servimg.com/u/f83/19/48/18/17/obiwan12.jpg", type: "sbire", stats: { Force: 90, Mana: 94, Vitesse: 88, Popularité: 95 }, turnStat: "Popularité" },
+	    { name: "Ahsoka", img: "https://i83.servimg.com/u/f83/19/48/18/17/ahsoka11.jpg", type: "admin", stats: { Force: 94, Mana: 95, Vitesse: 88, Popularité: 94 }, turnStat: ["Mana", "Vitesse"] },
+	    { name: "Obi-Wan", img: "https://i83.servimg.com/u/f83/19/48/18/17/obiwan11.jpg", type: "admin", stats: { Force: 88, Mana: 95, Vitesse: 87, Popularité: 95 }, turnStat: ["Mana", "Popularité"] },
+            { name: "Yoda", img: "https://i83.servimg.com/u/f83/19/48/18/17/yoda_o11.jpg", type: "dieu", stats: { Force: 92, Mana: 96, Vitesse: 86, Popularité: 95 }, turnStat: ["Mana", "Popularité"] },
+        ];
+
+        const playerCharacters = [
+            { name: "Carte 1", stats: { Force: 0, Mana: 0, Vitesse: 0, Popularité: 0 } },
+            { name: "Carte 2", stats: { Force: 0, Mana: 0, Vitesse: 0, Popularité: 0 } },
+            { name: "Carte 3", stats: { Force: 0, Mana: 0, Vitesse: 0, Popularité: 0 } }
+        ];
+
+        let currentSeries = [];
+        let currentAdversaryIndex = 0;
+        let selectedCharacter = null;
+        let tokens = 0;
+        let godPoints = 0;
+
+        // Initialiser les statistiques des personnages
+        function initializeCharacterStats() {
+            playerCharacters.forEach((character, index) => {
+                character.stats.Force = parseInt(document.getElementById(`force-${index}`).value) || 0;
+                character.stats.Mana = parseInt(document.getElementById(`mana-${index}`).value) || 0;
+                character.stats.Vitesse = parseInt(document.getElementById(`vitesse-${index}`).value) || 0;
+                character.stats.Popularité = parseInt(document.getElementById(`popularite-${index}`).value) || 0;
+            });
+            alert("Statistiques des personnages enregistrées !");
+        }
+
+        // Afficher les personnages
+        function displayCharacters() {
+            const container = document.getElementById("player-characters");
+            container.innerHTML = "";
+            playerCharacters.forEach((character, index) => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <button class="button" onclick="selectCharacter(${index})">${character.name}</button>
+                    <input type="number" class="stats-input" id="force-${index}" placeholder="Force">
+                    <input type="number" class="stats-input" id="mana-${index}" placeholder="Mana">
+                    <input type="number" class="stats-input" id="vitesse-${index}" placeholder="Vitesse">
+                    <input type="number" class="stats-input" id="popularite-${index}" placeholder="Popularité">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Choisir une série d'adversaires
+        function selectSeries(seriesNumber) {
+            currentSeries = seriesNumber === 1 ? series1 : series2;
+            currentAdversaryIndex = 0;
+            displayAdversary();
+        }
+
+        // Afficher le prochain adversaire
+        function displayAdversary() {
+            const container = document.getElementById("adversary");
+            container.innerHTML = "";
+            if (currentAdversaryIndex < currentSeries.length) {
+                const adversary = currentSeries[currentAdversaryIndex];
+                container.innerHTML = `
+                    <div class="adversary">
+                        <img src="${adversary.img}" alt="${adversary.name}">
+                        <p>${adversary.name} (${adversary.type})</p>
+                        <p>Force: ${adversary.stats.Force}, Mana: ${adversary.stats.Mana}, Vitesse: ${adversary.stats.Vitesse}, Popularité: ${adversary.stats.Popularité}</p>
+                        <p>Stat du tour: ${adversary.turnStat}</p>
+                    </div>
+                `;
+            } else {
+                alert("Tous les adversaires ont été vaincus !");
+                container.innerHTML = "<p>Vous avez vaincu tous les adversaires !</p>";
+            }
+        }
+
+        // Sélection de personnage
+        function selectCharacter(index) {
+            selectedCharacter = playerCharacters[index];
+            alert(`Vous avez sélectionné ${selectedCharacter.name}`);
+        }
+
+        // Combat
+        function startCombat() {
+            if (!selectedCharacter || currentAdversaryIndex >= currentSeries.length) {
+                alert("Veuillez sélectionner un personnage ou il n'y a plus d'adversaires.");
+                return;
+            }
+
+            const adversary = currentSeries[currentAdversaryIndex];
+            const statsToCompare = Array.isArray(adversary.turnStat)
+                ? adversary.turnStat
+                : [adversary.turnStat];
+            let charTotal = 0;
+            let advTotal = 0;
+
+            statsToCompare.forEach(stat => {
+                charTotal += parseInt(selectedCharacter.stats[stat]) || 0;
+                advTotal += adversary.stats[stat];
+            });
+
+            if (charTotal >= advTotal) {
+                alert(`${selectedCharacter.name} a vaincu ${adversary.name} !`);
+                updateRewards(adversary.type);
+                currentAdversaryIndex++;
+                displayAdversary();
+            } else {
+                alert(`${selectedCharacter.name} a perdu contre ${adversary.name}...`);
+                statsToCompare.forEach(stat => {
+                    adversary.stats[stat] -= parseInt(selectedCharacter.stats[stat]) || 0;
+                });
+
+                selectedCharacter.stats = { Force: 0, Mana: 0, Vitesse: 0, Popularité: 0 };
+                const remainingCharacters = playerCharacters.filter(c => c.stats.Force > 0 || c.stats.Mana > 0 || c.stats.Vitesse > 0 || c.stats.Popularité > 0);
+
+                if (remainingCharacters.length === 0) {
+                    alert("Game Over! Vous n'avez plus de personnages.");
+                } else {
+                    alert("Choisissez un autre personnage pour continuer !");
+                }
+            }
+        }
+
+        // Récompenses
+        function updateRewards(type) {
+            if (type === "sbire") {
+                tokens += 5;
+                godPoints += 2;
+            } else if (type === "admin") {
+                tokens += 10;
+                godPoints += 5;
+            } else if (type === "dieu") {
+                tokens += 50;
+                godPoints += 10;
+            }
+
+            document.getElementById("tokens").textContent = tokens;
+            document.getElementById("god-points").textContent = godPoints;
+        }
+
+        // Initialisation
+        displayCharacters();
+    </script>
+</body>
+</html>
